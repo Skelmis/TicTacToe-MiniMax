@@ -110,6 +110,18 @@ def HasSomeoneWon(game):
     return False, False
 
 
+def IsGameOver(game):
+    boardFull = IsBoardFull(game)
+    isWinner = HasSomeoneWon(game)
+
+    if isWinner[0] is True:
+        return isWinner
+    elif boardFull and isWinner[0] is False:
+        return True, False
+
+    return False, False
+
+
 def main():
     game = [[0 for x in range(3)] for y in range(3)]
     gameOver = False
@@ -159,16 +171,15 @@ def main():
             time.sleep(random.random())
             print(f"\nAI played: {AIMove[0]} {AIMove[1]}")
 
-        boardFull = IsBoardFull(game)
-        isWinner = HasSomeoneWon(game)
-        if isWinner[0] is True:
-            gameWinner = isWinner[1]
-            gameOver = True
-        elif boardFull and isWinner[0] is False:
-            gameWinner = False
+        over = IsGameOver(game)
+        if over[0] is True:
+            gameWinner = over[1]
             gameOver = True
 
     # The game is over, the board is now full or someone has won
+    print()
+    OutputGame(game)
+
     if gameWinner is False:
         print("It was a tie!")
     elif gameWinner == 1:
