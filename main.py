@@ -5,8 +5,10 @@ Lets make a simple as fuck game, for learning purpose
 1 - X
 2 - O
 """
+import math
 import random
 import time
+from copy import deepcopy
 
 
 def OutputGame(game):
@@ -48,7 +50,7 @@ def ParseUserInput(userInput):
     return row, column
 
 
-def GetValidAIMoves(game):
+def GetValidMoves(game):
     """
     Iterate over the entire board and create a nested list of valid moves
     """
@@ -122,11 +124,94 @@ def IsGameOver(game):
     return False, False
 
 
+def Max(game):
+    """
+    Given input, figure out the best ai move
+
+    Scoring:
+    -1 : Loss
+    0 : Tie
+    1 : Win
+    """
+    bestScore = -2
+    row = None
+    column = None
+
+    result = IsGameOver(game)
+    # print(result, game)
+    if result[0] is True:
+        winner = result[1]
+        if winner == 2:
+            # AI wins
+            return 1, 0, 0
+        elif winner == 1:
+            return -1, 0, 0
+        else:
+            return 0, 0, 0
+
+    for i in range(3):
+        for j in range(3):
+            if game[i][j] == 0:
+                # Only valid moves count
+                game[i][j] = 2
+                # print(f"Starting best AI move: {row}, {column} | Score: {bestScore}")
+                score, minRow, minCol = Min(game)
+                if score > bestScore:
+                    bestScore = score
+                    row = i
+                    column = j
+                # print(f"Current best AI move: {row}, {column} | Score: {bestScore}")
+                game[i][j] = 0
+    return bestScore, row, column
+
+
+def Min(game):
+    """
+    Given input, figure out the best user move
+
+    Essentially this is the opposite of max
+
+    Scoring:
+    -1 : Win
+    0 : Tie
+    1 : Loss
+    """
+    bestScore = 2
+    row = None
+    column = None
+
+    result = IsGameOver(game)
+    if result[0] is True:
+        winner = result[1]
+        if winner == 2:
+            # AI wins
+            return 1, 0, 0
+        elif winner == 1:
+            # User wins
+            return -1, 0, 0
+        else:
+            return 0, 0, 0
+
+    for i in range(3):
+        for j in range(3):
+            if game[i][j] == 0:
+                # Only valid moves count
+                game[i][j] = 1
+                score, maxRow, maxCol = Max(game)
+                if score < bestScore:
+                    bestScore = score
+                    row = i
+                    column = j
+                game[i][j] = 0
+    return bestScore, row, column
+
+
 def main():
     game = [[0 for x in range(3)] for y in range(3)]
     gameOver = False
     gameWinner = None
     userTurn = True
+    turnCounter = 0
 
     input(
         "Welcome to TicTacToe!\nFor your turn, please pick where you want to go based off of the numbers.\nPick the "
@@ -139,6 +224,13 @@ def main():
         OutputGame(game)  # Print the board before anything else
 
         if userTurn:
+            if turnCounter != 0:
+                start = time.time()
+                m, qx, qy = Min(game)
+                end = time.time()
+                print("Evaluation time: {}s".format(round(end - start, 7)))
+                print("Recommended move: X = {}, Y = {}".format(qx, qy))
+
             validInput = False
             while not validInput:
                 userMove = input("Where do you want to go? ")
@@ -161,20 +253,21 @@ def main():
                 game[row][column] = 1
                 userTurn = False
                 validInput = True
+                print()
 
         else:
             # Its the computers turn
-            validMoves = GetValidAIMoves(game)
-            AIMove = random.choice(validMoves)
-            game[AIMove[0]][AIMove[1]] = 2
             userTurn = True
-            time.sleep(random.random())
-            print(f"\nAI played: {AIMove[0]} {AIMove[1]}")
+            AIMove = Max(game)
+            print(f"AI played: {AIMove[1]} {AIMove[2]}\n")
+            game[AIMove[1]][AIMove[2]] = 2
 
         over = IsGameOver(game)
         if over[0] is True:
             gameWinner = over[1]
             gameOver = True
+
+        turnCounter += 1
 
     # The game is over, the board is now full or someone has won
     print()
